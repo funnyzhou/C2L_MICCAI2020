@@ -86,7 +86,7 @@ class NCEAverage(nn.Module):
 
 
 # =========================
-# InsDis and MoCo
+# InsDis and C2L
 # =========================
 
 class MemoryInsDis(nn.Module):
@@ -148,10 +148,10 @@ class MemoryInsDis(nn.Module):
         return out
 
 
-class MemoryMoCo(nn.Module):
+class MemoryC2L(nn.Module):
     """Fixed-size queue with momentum encoder"""
     def __init__(self, inputSize, outputSize, K, T=0.07, use_softmax=False):
-        super(MemoryMoCo, self).__init__()
+        super(MemoryC2L, self).__init__()
         self.outputSize = outputSize
         self.inputSize = inputSize
         self.queueSize = K

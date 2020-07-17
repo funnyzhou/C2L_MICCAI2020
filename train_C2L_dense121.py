@@ -1,8 +1,5 @@
 """
-Training MoCo and Instance Discrimination
-
-InsDis: Unsupervised feature learning via non-parametric instance discrimination
-MoCo: Momentum Contrast for Unsupervised Visual Representation Learning
+Code for C2L
 
 """
 from __future__ import print_function
@@ -24,7 +21,7 @@ from models.resnet_mixup import InsResNet50
 from models.resnet_mixup import InsResNet18
 from models.DensenetModels import DenseNet121
 from NCE.NCEAverage import MemoryInsDis
-from NCE.NCEAverage import MemoryMoCo
+from NCE.NCEAverage import MemoryC2L
 from NCE.NCECriterion import NCECriterion
 from NCE.NCECriterion import NCESoftmaxLoss
 from read_data import ChestXrayDataSet
@@ -97,7 +94,7 @@ def parse_option():
     parser.add_argument('--nce_m', type=float, default=0.5)
 
     # memory setting
-    parser.add_argument('--moco', action='store_true', help='using MoCo (otherwise Instance Discrimination)')
+    parser.add_argument('--c2l', action='store_true', help='using C2L (otherwise Instance Discrimination)')
     parser.add_argument('--alpha', type=float, default=0.999, help='exponential moving average weight')
 
     # GPU setting
@@ -123,7 +120,7 @@ def parse_option():
         opt.lr_decay_epochs.append(int(it))
 
     opt.method = 'softmax' if opt.softmax else 'nce'
-    prefix = 'MoCo{}'.format(opt.alpha) if opt.moco else 'InsDis'
+    prefix = 'C2L{}'.format(opt.alpha) if opt.c2l else 'InsDis'
 
     opt.model_name = '{}_{}_{}_{}_lr_{}_decay_{}_bsz_{}_crop_{}'.format(prefix, opt.method, opt.nce_k, opt.model,
                                                                         opt.learning_rate, opt.weight_decay,
@@ -216,7 +213,7 @@ def main():
         raise NotImplemented('augmentation not supported: {}'.format(args.aug))
 
     train_transform.transforms.append(Cutout(n_holes=3, length=32))
-    train_dataset = ImageFolderInstance(data_folder, transform=train_transform, two_crop=args.moco)
+    train_dataset = ImageFolderInstance(data_folder, transform=train_transform, two_crop=args.c2l)
     print(len(train_dataset))
     train_sampler = None
     train_loader = torch.utils.data.DataLoader(
@@ -228,34 +225,34 @@ def main():
 
     if args.model == 'resnet50':
         model = InsResNet50()
-        if args.moco:
+        if args.c2l:
             model_ema = InsResNet50()
     elif args.model == 'resnet50x2':
         model = InsResNet50(width=2)
-        if args.moco:
+        if args.c2l:
             model_ema = InsResNet50(width=2)
     elif args.model == 'resnet50x4':
         model = InsResNet50(width=4)
-        if args.moco:
+        if args.c2l:
             model_ema = InsResNet50(width=4)
     elif args.model == 'resnet18':
         model = InsResNet18(width=1)
-        if args.moco:
+        if args.c2l:
             model_ema = InsResNet18(width=1)
     elif args.model == 'densenet121':
         model = DenseNet121(isTrained=False)
-        if args.moco:
+        if args.c2l:
             model_ema = DenseNet121(isTrained=False)
     else:
         raise NotImplementedError('model not supported {}'.format(args.model))
 
     # copy weights from `model' to `model_ema'
-    if args.moco:
+    if args.c2l:
         moment_update(model, model_ema, 0)
 
     # set the contrast memory and criterion
-    if args.moco:
-        contrast = MemoryMoCo(128, n_data, args.nce_k, args.nce_t, args.softmax).cuda(args.gpu)
+    if args.c2l:
+        contrast = MemoryC2L(128, n_data, args.nce_k, args.nce_t, args.softmax).cuda(args.gpu)
     else:
         contrast = MemoryInsDis(128, n_data, args.nce_k, args.nce_t, args.nce_m, args.softmax).cuda(args.gpu)
 
@@ -263,7 +260,7 @@ def main():
     criterion = criterion.cuda(args.gpu)
 
     model = model.cuda()
-    if args.moco:
+    if args.c2l:
         model_ema = model_ema.cuda()
 
     optimizer = torch.optim.SGD(model.parameters(),
@@ -275,7 +272,7 @@ def main():
 
     if args.amp:
         model, optimizer = amp.initialize(model, optimizer, opt_level=args.opt_level)
-        if args.moco:
+        if args.c2l:
             optimizer_ema = torch.optim.SGD(model_ema.parameters(),
                                             lr=0,
                                             momentum=0,
@@ -293,7 +290,7 @@ def main():
             model.load_state_dict(checkpoint['model'])
             optimizer.load_state_dict(checkpoint['optimizer'])
             contrast.load_state_dict(checkpoint['contrast'])
-            if args.moco:
+            if args.c2l:
                 model_ema.load_state_dict(checkpoint['model_ema'])
 
             if args.amp and checkpoint['opt'].amp:
@@ -317,8 +314,8 @@ def main():
         print("==> training...")
 
         time1 = time.time()
-        if args.moco:
-            loss, prob = train_moco(epoch, train_loader, model, model_ema, contrast, criterion, optimizer, args)
+        if args.c2l:
+            loss, prob = train_C2L(epoch, train_loader, model, model_ema, contrast, criterion, optimizer, args)
         else:
             loss, prob = train_ins(epoch, train_loader, model, contrast, criterion, optimizer, args)
         time2 = time.time()
@@ -339,7 +336,7 @@ def main():
                 'optimizer': optimizer.state_dict(),
                 'epoch': epoch,
             }
-            if args.moco:
+            if args.c2l:
                 state['model_ema'] = model_ema.state_dict()
             if args.amp:
                 state['amp'] = amp.state_dict()
@@ -357,7 +354,7 @@ def main():
             'optimizer': optimizer.state_dict(),
             'epoch': epoch,
         }
-        if args.moco:
+        if args.c2l:
             state['model_ema'] = model_ema.state_dict()
         if args.amp:
             state['amp'] = amp.state_dict()
@@ -439,7 +436,7 @@ def Normalize(x):
     x = x.div(norm_x)
     return x
 
-def train_moco(epoch, train_loader, model, model_ema, contrast, criterion, optimizer, opt):
+def train_C2L(epoch, train_loader, model, model_ema, contrast, criterion, optimizer, opt):
     """
     one epoch training for instance discrimination
     """
