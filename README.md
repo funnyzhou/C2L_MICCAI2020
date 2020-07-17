@@ -38,6 +38,7 @@ Please configure `opt.data_folder`, `opt.model_path`, `opt.tb_path` and `data_fo
 Replace `pretrained_datasets/file_names.txt` with your own data paths.
 
 ### Step 3
+Note that since our method is based on MoCo, its code lies in the `train_moco()` function. You can find it from both `train_C2L_res18.py` and `train_C2L_dense121.py`.
 
 To train ResNet18:
 

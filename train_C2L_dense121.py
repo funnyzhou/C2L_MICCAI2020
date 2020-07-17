@@ -107,10 +107,9 @@ def parse_option():
 
     # set the path according to the environment
     #if hostname.startswith('visiongpu'):
-    #opt.data_folder = '/data/home/hongyuzhou/tiny-imagenet-200'.format(opt.dataset)
-    opt.data_folder = '/data/home/hongyuzhou/CMC-master/{}_mixup4_pretrained'.format(opt.dataset)
-    opt.model_path = '/data/home/hongyuzhou/CMC-master/{}_models_mixup4_pretrained'.format(opt.dataset)
-    opt.tb_path = '/data/home/hongyuzhou/CMC-master/{}_tensorboard_mixup4_pretrained'.format(opt.dataset)
+    opt.data_folder = '/home/C2L/{}_mixup4_pretrained'.format(opt.dataset)
+    opt.model_path = '/home/C2L/{}_models_mixup4_pretrained'.format(opt.dataset)
+    opt.tb_path = '/home/C2L/{}_tensorboard_mixup4_pretrained'.format(opt.dataset)
     #else:
     #    raise NotImplementedError('server invalid: {}'.format(hostname))
 
@@ -189,7 +188,7 @@ def main():
 
     # set the data loader
     #data_folder = os.path.join(args.data_folder, 'train')
-    data_folder = '/data/home/hongyuzhou/CMC-master/CXR/'
+    data_folder = '/home/C2L/CXR/'
 
     image_size = 224
     mean = [0.485, 0.456, 0.406]
