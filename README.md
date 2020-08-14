@@ -43,13 +43,13 @@ Replace `pretrained_datasets/file_names.txt` with your own data paths.
 To train ResNet18:
 
 ```python
-CUDA_VISIBLE_DEVICES=0,1,2,3 python train_C2L_res18.py --model resnet18 --batch_size 128 --num_workers 24
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train_C2L_res18.py --model resnet18 --batch_size 128 --num_workers 24 --c2l
 ```
 
 To train DenseNet121:
 
 ```python
-CUDA_VISIBLE_DEVICES=0,1,2,3 python train_C2L_dense121.py --model densenet121 --batch_size 128 --num_workers 24
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train_C2L_dense121.py --model densenet121 --batch_size 128 --num_workers 24 --c2l
 ```
 
 ## Model Weight
