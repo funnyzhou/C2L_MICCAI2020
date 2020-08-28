@@ -54,7 +54,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 python train_C2L_dense121.py --model densenet121 --
 
 ## Model Weight
 
-We also provide pretrained weights of [ResNet-18](https://drive.google.com/drive/folders/1qZkzBmv6LMAe0DHB0jKsM8fqcVdV1bdb?usp=sharing) using C2L.
+We also provide pretrained weights of [ResNet-18](https://drive.google.com/file/d/1DJ1jrbDvCfBPeIK6fw2WqkkEmUXmUf2C/view?usp=sharing) using C2L.
 
 ## Acknowledgements
 
